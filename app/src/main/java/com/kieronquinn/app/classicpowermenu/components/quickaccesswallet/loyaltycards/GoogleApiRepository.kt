@@ -3,10 +3,10 @@ package com.kieronquinn.app.classicpowermenu.components.quickaccesswallet.loyalt
 import android.content.Context
 import android.content.pm.PackageManager.NameNotFoundException
 import android.os.Build
-import com.kieronquinn.app.classicpowermenu.utils.Result
-import com.kieronquinn.app.classicpowermenu.utils.extensions.getPackageInfoCompat
 import com.kieronquinn.app.classicpowermenu.components.quickaccesswallet.loyaltycards.GoogleApiRepository.Scope
 import com.kieronquinn.app.classicpowermenu.components.settings.EncryptedSettings
+import com.kieronquinn.app.classicpowermenu.utils.Result
+import com.kieronquinn.app.classicpowermenu.utils.extensions.getPackageInfoCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -165,7 +165,8 @@ interface GoogleApiService {
         @Field("ACCESS_TOKEN") systemPartition: String = "1",
         @Field("callerPkg") callerPackage: String = Scope.AC2DM.packageName,
         @Field("callerSig") callerSig: String = Scope.AC2DM.clientSig,
-        @Field("add_account") addAccount: String = "1"
+        @Field("add_account") addAccount: String = "1",
+        @Field("droidguard_results") droidguardResults: String = "null"
     ): Call<ResponseBody>
 
     @FormUrlEncoded

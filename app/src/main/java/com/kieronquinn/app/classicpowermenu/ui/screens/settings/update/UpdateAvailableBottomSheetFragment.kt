@@ -9,12 +9,12 @@ import com.kieronquinn.app.classicpowermenu.databinding.FragmentUpdateBottomShee
 import com.kieronquinn.app.classicpowermenu.ui.activities.MainActivityViewModel
 import com.kieronquinn.app.classicpowermenu.ui.base.BaseBottomSheetFragment
 import com.kieronquinn.app.classicpowermenu.utils.extensions.onApplyInsets
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class UpdateAvailableBottomSheetFragment: BaseBottomSheetFragment<FragmentUpdateBottomSheetBinding>(FragmentUpdateBottomSheetBinding::inflate) {
 
-    private val sharedViewModel by sharedViewModel<MainActivityViewModel>()
+    private val sharedViewModel by activityViewModel<MainActivityViewModel>()
     private val viewModel by viewModel<UpdateAvailableBottomSheetViewModel>()
 
     private val update by lazy {

@@ -16,12 +16,12 @@ import com.kieronquinn.app.classicpowermenu.utils.extensions.navigateSafely
 import com.kieronquinn.app.classicpowermenu.utils.extensions.whenResumed
 import kotlinx.coroutines.flow.collect
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class SettingsRootFragment: BoundFragment<FragmentSettingsRootBinding>(FragmentSettingsRootBinding::inflate) {
 
     private val navigation by inject<ContainerNavigation>()
-    private val sharedViewModel by sharedViewModel<MainActivityViewModel>()
+    private val sharedViewModel by activityViewModel<MainActivityViewModel>()
 
     private val navHostFragment by lazy {
         childFragmentManager.findFragmentById(R.id.nav_host_fragment_root) as NavHostFragment
