@@ -3,11 +3,10 @@ plugins {
 }
 
 android {
-    compileSdk 34
+    compileSdkVersion 36
 
     defaultConfig {
         minSdk 30
-        targetSdk 35
 
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -19,15 +18,21 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     namespace 'com.android.internal'
     buildFeatures {
         aidl true
     }
+    lint {
+        targetSdk 35
+    }
+    testOptions {
+        targetSdk 35
+    }
 }
 
 dependencies {
-    implementation 'androidx.annotation:annotation:1.9.0'
+    implementation 'androidx.annotation:annotation:1.10.0'
 }

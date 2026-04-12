@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.kieronquinn.app.classicpowermenu.R
@@ -16,7 +15,6 @@ import com.kieronquinn.app.classicpowermenu.databinding.FragmentBottomSheetColor
 import com.kieronquinn.app.classicpowermenu.ui.base.BaseBottomSheetFragment
 import com.kieronquinn.app.classicpowermenu.utils.extensions.whenResumed
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
 class ColorPickerBottomSheetFragment : BaseBottomSheetFragment<FragmentBottomSheetColorPickerBinding>(FragmentBottomSheetColorPickerBinding::inflate) {
 

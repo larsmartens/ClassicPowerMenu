@@ -1,6 +1,7 @@
 package com.kieronquinn.app.classicpowermenu.ui.screens.settings.quickaccesswallet.manage
 
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.WindowInsetsCompat
@@ -18,7 +19,7 @@ import com.kieronquinn.app.classicpowermenu.utils.extensions.onApplyInsets
 import com.kieronquinn.app.classicpowermenu.utils.extensions.whenResumed
 import com.kieronquinn.monetcompat.extensions.views.applyMonet
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.*
+import java.util.Collections
 
 class SettingsQuickAccessWalletManageFragment: BoundFragment<FragmentSettingsQuickAccessWalletManageBinding>(FragmentSettingsQuickAccessWalletManageBinding::inflate), StandaloneFragment {
 
@@ -65,7 +66,7 @@ class SettingsQuickAccessWalletManageFragment: BoundFragment<FragmentSettingsQui
         binding.syncButton.applyMonet()
         binding.signInButton.applyMonet()
         binding.signInButton.setTextColor(monet.getPrimaryColor(requireContext()))
-        binding.syncButton.drawable.setTint(monet.getPrimaryColor(requireContext()))
+        binding.syncButton.drawable.setTint(Color.WHITE)
         binding.signInInfoCard.run {
             val background = monet.getPrimaryColor(context, !context.isDarkMode)
             backgroundTintList = ColorStateList.valueOf(background)

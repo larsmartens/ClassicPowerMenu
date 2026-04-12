@@ -12,16 +12,15 @@ import com.kieronquinn.app.classicpowermenu.databinding.FragmentUpdateDownloadBo
 import com.kieronquinn.app.classicpowermenu.ui.activities.MainActivityViewModel
 import com.kieronquinn.app.classicpowermenu.ui.base.BaseBottomSheetFragment
 import com.kieronquinn.monetcompat.extensions.views.applyMonet
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class UpdateDownloadBottomSheetFragment: BaseBottomSheetFragment<FragmentUpdateDownloadBottomSheetBinding>(FragmentUpdateDownloadBottomSheetBinding::inflate) {
 
     private val updateViewModel by viewModel<UpdateDownloadBottomSheetViewModel>()
 
-    private val sharedViewModel by sharedViewModel<MainActivityViewModel>()
+    private val sharedViewModel by activityViewModel<MainActivityViewModel>()
 
     override val cancelable = false
 
