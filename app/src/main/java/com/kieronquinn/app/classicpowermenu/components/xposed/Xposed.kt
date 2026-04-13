@@ -1,5 +1,6 @@
 package com.kieronquinn.app.classicpowermenu.components.xposed
 
+import android.app.AndroidAppHelper
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -131,7 +132,11 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
     }
 
     private fun hookAospSystemUI(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val globalActionsDialogClass = findGlobalActionsDialogClass(lpparam.classLoader) ?: return
+        val globalActionsDialogClass = findGlobalActionsDialogClass(lpparam.classLoader)
+        if (globalActionsDialogClass == null) {
+            hookAospGlobalActionsComponent(lpparam)
+            return
+        }
 
         //Bind the service when the dialog starts for the best chance of it being ready
         XposedBridge.hookMethod(globalActionsDialogClass.constructors[0], object: XC_MethodHook(){
@@ -178,6 +183,41 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
         })
     }
 
+    private fun hookAospGlobalActionsComponent(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val componentClass = XposedHelpers.findClassIfExists(
+            "com.android.systemui.globalactions.GlobalActionsComponent",
+            lpparam.classLoader
+        ) ?: run {
+            XposedBridge.log("$TAG: unable to resolve GlobalActionsComponent")
+            return
+        }
+
+        val showMethod = componentClass.declaredMethods.firstOrNull {
+            it.name == "handleShowGlobalActionsMenu" && it.parameterCount == 0
+        } ?: return
+
+        val hideMethod = componentClass.declaredMethods.firstOrNull {
+            it.name == "onGlobalActionsHidden" && it.parameterCount == 0
+        }
+
+        XposedBridge.hookMethod(showMethod, object : XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                if (handleShowComponent(param)) {
+                    param.result = null
+                }
+            }
+        })
+
+        hideMethod?.let {
+            XposedBridge.hookMethod(it, object : XC_MethodHook() {
+                override fun beforeHookedMethod(param: MethodHookParam?) {
+                    super.beforeHookedMethod(param)
+                    handleDismiss()
+                }
+            })
+        }
+    }
+
     private fun findGlobalActionsDialogClass(classLoader: ClassLoader): Class<*>? {
         val candidates = buildList {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -191,6 +231,20 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
             if (it == null) {
                 XposedBridge.log("$TAG: unable to resolve a GlobalActions dialog class from $candidates")
             }
+        }
+    }
+
+    private fun handleShowComponent(param: XC_MethodHook.MethodHookParam): Boolean {
+        return service?.let {
+            if (showGlobalActions(it)) {
+                XposedHelpers.callMethod(param.thisObject, "onGlobalActionsShown")
+                return@let true
+            } else false
+        } ?: run {
+            AndroidAppHelper.currentApplication()?.let {
+                tryBindService(it)
+            } ?: XposedBridge.log("$TAG: currentApplication unavailable while binding global actions service")
+            return@run false
         }
     }
 
