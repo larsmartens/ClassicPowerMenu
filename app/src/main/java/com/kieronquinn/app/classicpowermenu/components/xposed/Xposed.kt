@@ -42,7 +42,7 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
             Build.VERSION::class.java.getDeclaredField("SEM_PLATFORM_INT").getInt(null)
         } catch(e: Exception) {-1}
 
-        if(lpparam.packageName == "com.android.systemui") hookSystemUI(lpparam)
+        if(lpparam.packageName == "com.android.systemui") deferSystemUIHooks(lpparam)
         if(lpparam.packageName == BuildConfig.APPLICATION_ID) hookSelf(lpparam)
     }
 
@@ -58,17 +58,34 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
         })
     }
 
-    private fun hookSystemUI(lpparam: XC_LoadPackage.LoadPackageParam){
-        when {
-            miuiVersion >= 816 -> hookHyperOSSystemUI(lpparam)
-            miuiVersion >= 125 -> hookMiuiSystemUI(lpparam)
-            oneuiVersion >= 90000 -> hookOneUISystemUI(lpparam)
-            else -> hookAospSystemUI(lpparam)
-        }
+    private fun deferSystemUIHooks(lpparam: XC_LoadPackage.LoadPackageParam) {
+        XposedHelpers.findAndHookMethod(
+            "com.android.systemui.SystemUIApplication",
+            lpparam.classLoader,
+            "onCreate",
+            object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    if (isHooked) return
+                    val classLoader = param.thisObject.javaClass.classLoader ?: lpparam.classLoader
+                    runCatching {
+                        when {
+                            miuiVersion >= 816 -> hookHyperOSSystemUI(classLoader)
+                            miuiVersion >= 125 -> hookMiuiSystemUI(lpparam)
+                            oneuiVersion >= 90000 -> hookOneUISystemUI(classLoader)
+                            else -> hookAospSystemUI(classLoader)
+                        }
+                        isHooked = true
+                    }.onFailure {
+                        Log.d(TAG, "Failed to defer SystemUI hooks", it)
+                        XposedBridge.log(it)
+                    }
+                }
+            }
+        )
     }
 
-    private fun hookHyperOSSystemUI(lpparam: XC_LoadPackage.LoadPackageParam) {
-        XposedHelpers.findAndHookMethod("com.android.systemui.plugins.PluginEnablerImpl", lpparam.classLoader, "isEnabled", ComponentName::class.java, object: XC_MethodHook() {
+    private fun hookHyperOSSystemUI(classLoader: ClassLoader) {
+        XposedHelpers.findAndHookMethod("com.android.systemui.plugins.PluginEnablerImpl", classLoader, "isEnabled", ComponentName::class.java, object: XC_MethodHook() {
             override fun beforeHookedMethod(param: MethodHookParam) {
                 if (param.args[0].toString().contains("GlobalActions")) {
                     param.result = false
@@ -76,13 +93,13 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
             }
         })
 
-        hookAospSystemUI(lpparam)
+        hookAospSystemUI(classLoader)
     }
 
-    private fun hookOneUISystemUI(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val globalActionsDialogClass = findGlobalActionsDialogClass(lpparam.classLoader) ?: return
+    private fun hookOneUISystemUI(classLoader: ClassLoader) {
+        val globalActionsDialogClass = findGlobalActionsDialogClass(classLoader) ?: return
         val samsungGlobalActionsPresenterClassName = "com.samsung.android.globalactions.presentation.SamsungGlobalActionsPresenter"
-        val samsungGlobalActionsPresenterClass = XposedHelpers.findClass(samsungGlobalActionsPresenterClassName, lpparam.classLoader)
+        val samsungGlobalActionsPresenterClass = XposedHelpers.findClass(samsungGlobalActionsPresenterClassName, classLoader)
 
         //Bind the service when the dialog starts for the best chance of it being ready
         XposedBridge.hookMethod(globalActionsDialogClass.constructors[0], object: XC_MethodHook(){
@@ -131,10 +148,10 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
         })
     }
 
-    private fun hookAospSystemUI(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val globalActionsDialogClass = findGlobalActionsDialogClass(lpparam.classLoader)
+    private fun hookAospSystemUI(classLoader: ClassLoader) {
+        val globalActionsDialogClass = findGlobalActionsDialogClass(classLoader)
         if (globalActionsDialogClass == null) {
-            hookAospGlobalActionsComponent(lpparam)
+            hookAospGlobalActionsComponent(classLoader)
             return
         }
 
@@ -183,10 +200,10 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
         })
     }
 
-    private fun hookAospGlobalActionsComponent(lpparam: XC_LoadPackage.LoadPackageParam) {
+    private fun hookAospGlobalActionsComponent(classLoader: ClassLoader) {
         val componentClass = XposedHelpers.findClassIfExists(
             "com.android.systemui.globalactions.GlobalActionsComponent",
-            lpparam.classLoader
+            classLoader
         ) ?: run {
             XposedBridge.log("$TAG: unable to resolve GlobalActionsComponent")
             return
