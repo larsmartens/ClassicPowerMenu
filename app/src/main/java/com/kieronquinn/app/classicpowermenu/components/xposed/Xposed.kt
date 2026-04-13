@@ -79,12 +79,7 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
     }
 
     private fun hookOneUISystemUI(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val globalActionsDialogClassName = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
-            "com.android.systemui.globalactions.GlobalActionsDialogLite"
-        }else{
-            "com.android.systemui.globalactions.GlobalActionsDialog"
-        }
-        val globalActionsDialogClass = XposedHelpers.findClass(globalActionsDialogClassName, lpparam.classLoader)
+        val globalActionsDialogClass = findGlobalActionsDialogClass(lpparam.classLoader) ?: return
         val samsungGlobalActionsPresenterClassName = "com.samsung.android.globalactions.presentation.SamsungGlobalActionsPresenter"
         val samsungGlobalActionsPresenterClass = XposedHelpers.findClass(samsungGlobalActionsPresenterClassName, lpparam.classLoader)
 
@@ -136,13 +131,7 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
     }
 
     private fun hookAospSystemUI(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val globalActionsDialogClassName = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
-            "com.android.systemui.globalactions.GlobalActionsDialogLite"
-        }else{
-            "com.android.systemui.globalactions.GlobalActionsDialog"
-        }
-
-        val globalActionsDialogClass = XposedHelpers.findClass(globalActionsDialogClassName, lpparam.classLoader)
+        val globalActionsDialogClass = findGlobalActionsDialogClass(lpparam.classLoader) ?: return
 
         //Bind the service when the dialog starts for the best chance of it being ready
         XposedBridge.hookMethod(globalActionsDialogClass.constructors[0], object: XC_MethodHook(){
@@ -187,6 +176,22 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
                 handleDismiss()
             }
         })
+    }
+
+    private fun findGlobalActionsDialogClass(classLoader: ClassLoader): Class<*>? {
+        val candidates = buildList {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                add("com.android.systemui.globalactions.GlobalActionsDialogLite")
+            }
+            add("com.android.systemui.globalactions.GlobalActionsDialog")
+        }
+        return candidates.firstNotNullOfOrNull {
+            XposedHelpers.findClassIfExists(it, classLoader)
+        }.also {
+            if (it == null) {
+                XposedBridge.log("$TAG: unable to resolve a GlobalActions dialog class from $candidates")
+            }
+        }
     }
 
     private fun hookMiuiSystemUI(lpparam: XC_LoadPackage.LoadPackageParam) {
