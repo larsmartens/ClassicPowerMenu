@@ -1,6 +1,7 @@
 package com.kieronquinn.app.classicpowermenu.components.xposed
 
 import android.app.AndroidAppHelper
+import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -59,37 +60,26 @@ class Xposed: IXposedHookLoadPackage, ServiceConnection {
     }
 
     private fun deferSystemUIHooks(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val appClasses = listOf(
-            "com.android.systemui.application.impl.SystemUIApplicationImpl",
-            "com.android.systemui.SystemUIApplication"
-        )
-        appClasses.firstOrNull {
-            XposedHelpers.findClassIfExists(it, lpparam.classLoader) != null
-        }?.let { appClassName ->
-            XposedHelpers.findAndHookMethod(
-                appClassName,
-                lpparam.classLoader,
-                "onCreate",
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: MethodHookParam) {
-                        if (isHooked) return
-                        val classLoader = param.thisObject.javaClass.classLoader ?: lpparam.classLoader
-                        runCatching {
-                            when {
-                                miuiVersion >= 816 -> hookHyperOSSystemUI(classLoader)
-                                miuiVersion >= 125 -> hookMiuiSystemUI(lpparam)
-                                oneuiVersion >= 90000 -> hookOneUISystemUI(classLoader)
-                                else -> hookAospSystemUI(classLoader)
-                            }
-                            isHooked = true
-                        }.onFailure {
-                            Log.d(TAG, "Failed to defer SystemUI hooks", it)
-                            XposedBridge.log(it)
-                        }
+        XposedBridge.hookAllMethods(Application::class.java, "onCreate", object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                if (isHooked) return
+                val application = param.thisObject as? Application ?: return
+                if (application.packageName != "com.android.systemui") return
+                val classLoader = application.javaClass.classLoader ?: lpparam.classLoader
+                runCatching {
+                    when {
+                        miuiVersion >= 816 -> hookHyperOSSystemUI(classLoader)
+                        miuiVersion >= 125 -> hookMiuiSystemUI(lpparam)
+                        oneuiVersion >= 90000 -> hookOneUISystemUI(classLoader)
+                        else -> hookAospSystemUI(classLoader)
                     }
+                    isHooked = true
+                }.onFailure {
+                    Log.d(TAG, "Failed to defer SystemUI hooks", it)
+                    XposedBridge.log(it)
                 }
-            )
-        } ?: XposedBridge.log("$TAG: unable to resolve a SystemUI application class from $appClasses")
+            }
+        })
     }
 
     private fun hookHyperOSSystemUI(classLoader: ClassLoader) {
