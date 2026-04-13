@@ -1,5 +1,9 @@
 ![Classic Power Menu](https://i.imgur.com/DonYhMA.png)
 
+## Fork Notes
+
+This fork carries Android 16 compatibility work and publishes fork-built APKs through GitHub Actions. The Android 16 hook drift and validation workflow are documented in [docs/android16-compat.md](docs/android16-compat.md).
+
 Classic Power Menu is a Power Menu Replacement for Android 11+, with the main aim being restoring power menu options (Device Controls & Quick Access Wallet) on Android 12.
 
 **Classic Power Menu Requires root access to function, it is not possible without root**
