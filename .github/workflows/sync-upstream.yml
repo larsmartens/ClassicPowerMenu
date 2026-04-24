@@ -1,0 +1,78 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: "35 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/KieronQuinn/ClassicPowerMenu.git || true
+
+      - name: Fetch upstream
+        run: git fetch upstream main --tags
+
+      - name: Check for upstream commits
+        id: check
+        run: |
+          BEHIND=$(git rev-list HEAD..upstream/main --count)
+          echo "behind=$BEHIND" >> "$GITHUB_OUTPUT"
+          echo "Upstream is $BEHIND commit(s) ahead"
+
+      - name: Capture fork baseline
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Merge upstream
+        if: steps.check.outputs.behind != '0'
+        run: |
+          git merge upstream/main --no-edit -X ours || {
+            git diff --name-only --diff-filter=U > conflicts.txt
+            while IFS= read -r path; do
+              [ -n "$path" ] || continue
+              case "$path" in
+                .github/workflows/*)
+                  git restore --source="${{ steps.base.outputs.sha }}" --staged --worktree -- "$path" 2>/dev/null || git rm -f -- "$path"
+                  ;;
+                *)
+                  git checkout --ours -- "$path" 2>/dev/null || git rm -f -- "$path"
+                  ;;
+              esac
+            done < conflicts.txt
+            rm -f conflicts.txt
+            git add -A
+            git commit --no-edit
+          }
+
+      - name: Restore fork workflows
+        if: steps.check.outputs.behind != '0'
+        run: |
+          git restore --source="${{ steps.base.outputs.sha }}" --staged --worktree .github/workflows || true
+          if ! git diff --quiet -- .github/workflows; then
+            git add .github/workflows
+            git commit -m "chore: preserve fork workflows after upstream sync"
+          fi
+
+      - name: Push synced branch
+        if: steps.check.outputs.behind != '0'
+        run: git push origin main
