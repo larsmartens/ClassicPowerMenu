@@ -24,7 +24,7 @@ class UpdateChecker {
     }
 
     companion object {
-        private const val BASE_URL = "https://api.github.com/repos/KieronQuinn/ClassicPowerMenu/"
+        private const val BASE_URL = "https://api.github.com/repos/larsmartens/ClassicPowerMenu/"
     }
 
     fun getLatestRelease() = callbackFlow {
@@ -57,9 +57,9 @@ class UpdateChecker {
                             body,
                             publishedAt,
                             asset?.browserDownloadUrl
-                                ?: "https://github.com/KieronQuinn/ClassicPowerMenu/releases",
+                                ?: "https://github.com/larsmartens/ClassicPowerMenu/releases",
                             asset?.name ?: "ClassicPowerMenu.apk",
-                            releaseUrl ?: "https://github.com/KieronQuinn/ClassicPowerMenu/releases"
+                            releaseUrl ?: "https://github.com/larsmartens/ClassicPowerMenu/releases"
                         )
                     ).isSuccess
                 }

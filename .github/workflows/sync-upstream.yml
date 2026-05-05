@@ -37,6 +37,11 @@ jobs:
         run: |
           BEHIND=$(git rev-list HEAD..upstream/main --count)
           echo "behind=$BEHIND" >> "$GITHUB_OUTPUT"
+          if [ "$BEHIND" != "0" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          fi
           echo "Upstream is $BEHIND commit(s) ahead"
 
       - name: Capture fork baseline
@@ -76,3 +81,43 @@ jobs:
       - name: Push synced branch
         if: steps.check.outputs.behind != '0'
         run: git push origin main
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Read release version
+        id: version
+        run: |
+          VERSION=$(sed -n "s/^def version = '\\([^']*\\)'/\\1/p" app/build.gradle | head -n 1)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build APKs
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleDebug assembleRelease
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClassicPowerMenu-sync-build-${{ steps.version.outputs.version }}
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+
+      - name: Create GitHub release
+        if: steps.check.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ClassicPowerMenu ${{ steps.version.outputs.version }}
+          body: Automated fork build for ${{ steps.version.outputs.version }}.
+          files: app/build/outputs/apk/release/*.apk
+          fail_on_unmatched_files: true
+          make_latest: true
+          overwrite_files: true

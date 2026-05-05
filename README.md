@@ -8,7 +8,7 @@ Classic Power Menu is a Power Menu Replacement for Android 11+, with the main ai
 
 **Classic Power Menu Requires root access to function, it is not possible without root**
 
-**[Please read the FAQ before downloading or creating an issue](https://github.com/KieronQuinn/ClassicPowerMenu/blob/main/app/src/main/assets/faq.md)**
+**[Please read the FAQ before downloading or creating an issue](https://github.com/larsmartens/ClassicPowerMenu/blob/main/app/src/main/assets/faq.md)**
 
 [![Crowdin](https://badges.crowdin.net/classicpowermenu/localized.svg)](https://crowdin.com/project/classicpowermenu)
 
@@ -37,7 +37,7 @@ Classic Power Menu is a Power Menu Replacement for Android 11+, with the main ai
 
 ## Download
 
-[Download the latest release from the Releases page](https://github.com/KieronQuinn/ClassicPowerMenu/releases)
+[Download the latest release from the Releases page](https://github.com/larsmartens/ClassicPowerMenu/releases)
 
 ### Content Creators
 
